@@ -1,0 +1,1 @@
+This folder will be populated with the rendered figures.
