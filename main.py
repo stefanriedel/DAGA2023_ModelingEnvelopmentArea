@@ -16,13 +16,15 @@ N_ambi = 5
 room_volume = 5 * 10 * 11
 area_len = 5
 
-# Percetually relevant freq. ranges, see paper
+# Perceptually meaningful frequency ranges to average IC and ILD,
+# where auditory perception is most sensitive to ITD and ILD cues.
 IC_range = np.array([200, 1600])
 ILD_range = np.array([200, 12800])
 
+# Parameter list used for plots in the paper
 parameters = generateParameterList()
 
-for idx in range(4):  # render some configurationsx in parameters
+for idx in range(6):  # render the plots of the paper
     ls_xyz = parameters['ls_xyz'][idx]
     source_exponents = parameters['source_exponents'][idx]
     config_name = parameters['config_name'][idx]

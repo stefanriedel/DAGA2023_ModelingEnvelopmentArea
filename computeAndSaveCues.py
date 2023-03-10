@@ -184,6 +184,8 @@ def computeAndSaveCues(ls_xyz,
                 # rot_src_dirs = sph2cart(azi - np.pi / 2, zen).transpose()
                 # w_Gamma = computeCardioidDirectivityWeights(ls_xyz, rot_src_dirs)
                 g = w_r[:, p]  # * w_Gamma
+
+                # We assume uncorrelated signals of unit variances
                 C = computeSHCovarianceMatrix(src_dirs, g, N, room_volume,
                                               room_T60, directivity_index)
                 IC, ILD = compute_auditory_cues_magLS(h_L, h_R, C, N,
