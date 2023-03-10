@@ -18,6 +18,7 @@ area_len = 5
 
 # Perceptually meaningful frequency ranges to average IC and ILD,
 # where auditory perception is most sensitive to ITD and ILD cues.
+# Refer to DAGA paper for references/discussion.
 IC_range = np.array([200, 1600])
 ILD_range = np.array([200, 12800])
 

@@ -22,7 +22,6 @@ def plotAreaFromData(dataset_name, area_len, config_name=[], filetype='pdf'):
 
     LEV_ILD = data['LEV_ILD']
     LEV_IC = data['LEV_IC']
-    BAL = data['BAL']
 
     # Get meshgrid simulation area
     list_X, list_Y = data['list_X'], data['list_Y']
@@ -47,7 +46,6 @@ def plotAreaFromData(dataset_name, area_len, config_name=[], filetype='pdf'):
     IC_lvls = np.array([0.0, 0.2, 0.5, 1.0])
 
     LEV_ILD = np.clip(LEV_ILD, a_min=-9.9, a_max=0.0)
-    BAL = np.clip(BAL, a_min=-9.9, a_max=0.0)
 
     font_sz = 18
 

@@ -29,18 +29,28 @@ def computeCardioidDirectivityWeights(axis_xyz, eval_xyz):
     return weights
 
 
-def computeSHCovarianceMatrix(src_dirs, g, N, room_volume, room_T60,
-                              directivity_index):
+def computeSHCovarianceMatrix(src_dirs,
+                              g,
+                              Css,
+                              N,
+                              room_volume,
+                              room_T60,
+                              directivity_index,
+                              Css_identity=True):
     Y = sh_xyz(N, src_dirs[:, 0], src_dirs[:, 1], src_dirs[:, 2]).transpose()
     diag_g_sqrd = np.diag(g**2)
-    YGY = Y @ diag_g_sqrd @ Y.transpose()
 
     eps = 1e-6
     room_T60 = room_T60 + eps
     gamma = computeDirectivityFactor(directivity_index)
     r_H = 0.057 * np.sqrt(room_volume / room_T60) * np.sqrt(gamma)
 
-    C = YGY + np.eye(YGY.shape[0]) * g.size / (r_H**2 * 4 * np.pi)
+    #if Css_identity == True:
+    #    YGY = Y @ diag_g_sqrd @ Y.transpose()
+    #    C = YGY + np.eye(YGY.shape[0]) * g.size / (r_H**2 * 4 * np.pi)
+    #else:
+    YGY = Y @ diag_g_sqrd @ Css @ Y.transpose()
+    C = YGY + np.eye(YGY.shape[0]) * np.trace(Css) / (r_H**2 * 4 * np.pi)
     return C
 
 
@@ -70,7 +80,7 @@ def computeAndSaveCues(ls_xyz,
     x_ls, y_ls, z_ls = ls_xyz[:, 0], ls_xyz[:, 1], ls_xyz[:, 2]
 
     # Define source signal covariance matrix, default is unit matrix
-    Cov = np.eye(x_ls.size)
+    Css = np.eye(x_ls.size)
     # Cov = np.ones((phi_ls.size,phi_ls.size))
 
     # Stack source coordinates
@@ -99,7 +109,6 @@ def computeAndSaveCues(ls_xyz,
     filename = 'gammatone_erb_mag_windows_nfft_1024_numbands_320.npy'
     gammatone_mag_win = np.load(pjoin(utility_path, filename))
     Nfft = int((gammatone_mag_win.shape[1] - 1) * 2)
-    num_bands = gammatone_mag_win.shape[0]
     filename = 'gammatone_fc_numbands_320_fs_48000.npy'
     f_c = np.load(pjoin(utility_path, filename))
 
@@ -148,7 +157,6 @@ def computeAndSaveCues(ls_xyz,
 
     LEV_ILD = np.zeros((num_variables, num_listener_pos, num_rotations))
     LEV_IC = np.zeros((num_variables, num_listener_pos, num_rotations))
-    BAL = np.zeros((num_variables, num_listener_pos, num_rotations))
 
     IC_low_lim = int(np.where(f_c >= IC_range[0])[0][0])
     IC_up_lim = int(np.where(f_c >= IC_range[1])[0][0])
@@ -163,7 +171,6 @@ def computeAndSaveCues(ls_xyz,
     def mainLoopSourceModels(s):
         LEV_IC_tmp = np.zeros((num_listener_pos, num_rotations))
         LEV_ILD_tmp = np.zeros((num_listener_pos, num_rotations))
-        BAL_tmp = np.zeros((num_listener_pos, num_rotations))
 
         w_r = np.zeros((x_ls.size, num_listener_pos))
         exponents = source_exponents[s, :]
@@ -182,11 +189,10 @@ def computeAndSaveCues(ls_xyz,
 
                 # We could apply some directivity weights here
                 # rot_src_dirs = sph2cart(azi - np.pi / 2, zen).transpose()
-                # w_Gamma = computeCardioidDirectivityWeights(ls_xyz, rot_src_dirs)
-                g = w_r[:, p]  # * w_Gamma
+                # w_direc = computeCardioidDirectivityWeights(ls_xyz, rot_src_dirs)
+                g = w_r[:, p]  # * w_direc
 
-                # We assume uncorrelated signals of unit variances
-                C = computeSHCovarianceMatrix(src_dirs, g, N, room_volume,
+                C = computeSHCovarianceMatrix(src_dirs, g, Css, N, room_volume,
                                               room_T60, directivity_index)
                 IC, ILD = compute_auditory_cues_magLS(h_L, h_R, C, N,
                                                       freq_window, tau_r)
@@ -198,10 +204,8 @@ def computeAndSaveCues(ls_xyz,
                 # Careful: LEV_IC holds 1-IC values for direct plotting
                 LEV_IC_tmp[p, rot] = 1 - IC
                 LEV_ILD_tmp[p, rot] = -np.abs(ILD)
-                BAL_tmp[p, rot] = 20 * np.log10(
-                    np.max(w_r[:, p]) / np.min(w_r[:, p]))
 
-        return LEV_IC_tmp, LEV_ILD_tmp, BAL_tmp
+        return LEV_IC_tmp, LEV_ILD_tmp
 
     print('Main simulation loop started... \n')
     result_lists = Parallel(n_jobs=3)(delayed(mainLoopSourceModels)(s)
@@ -213,25 +217,22 @@ def computeAndSaveCues(ls_xyz,
     for s in range(num_variables):
         LEV_IC[s, :, :] = res_arr[s, 0, :, :]
         LEV_ILD[s, :, :] = res_arr[s, 1, :, :]
-        BAL[s, :, :] = res_arr[s, 2, :, :]
 
     if max_cue:
+        # worst orientation (inverted cues for plots)
         LEV_ILD = np.min(LEV_ILD, axis=-1)
         LEV_IC = np.min(LEV_IC, axis=-1)
-        BAL = -np.max(BAL, axis=-1)
     else:
+        # mean across orientations
         LEV_ILD = np.mean(LEV_ILD, axis=-1)
         LEV_IC = np.mean(LEV_IC, axis=-1)
-        BAL = -np.mean(BAL, axis=-1)
 
     LEV_ILD = np.reshape(LEV_ILD, (num_variables, res, res))
     LEV_IC = np.reshape(LEV_IC, (num_variables, res, res))
-    BAL = np.reshape(BAL, (num_variables, res, res))
 
     data_to_save = {
         'LEV_ILD': LEV_ILD,
         'LEV_IC': LEV_IC,
-        'BAL': BAL,
         'list_X': list_X,
         'list_Y': list_Y,
         'ls_xyz': ls_xyz,
