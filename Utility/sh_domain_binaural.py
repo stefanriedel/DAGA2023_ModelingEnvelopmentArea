@@ -2,20 +2,6 @@ import numpy as np
 
 
 def compute_auditory_cues_magLS(h_L, h_R, C, N, freq_window, tau_r):
-    """Returns IC and ILD estimated based on 
-        low-order SH approximation of ear directivities.
-
-    Args:
-        look_dir (ndarray): look direction unit vector x,y,z
-        src_dirs (ndarray): source directions [num_sourcesm, 3]
-        g (ndarray): Distance/Signal weights for the sources [num_sources, 1]
-        N (int): Ambisonic order for simulation, e.g. N=2
-        h_L (ndarray): Freq.-domain binaural decoder (N+1)^2 x (Nfft/2+1)
-
-
-    Returns:
-        IC, ILD 
-    """
     assert ((N + 1)**2 == h_L.shape[0])
     assert ((N + 1)**2 == h_R.shape[0])
 

@@ -45,13 +45,9 @@ def computeSHCovarianceMatrix(src_dirs,
     gamma = computeDirectivityFactor(directivity_index)
     r_H = 0.057 * np.sqrt(room_volume / room_T60) * np.sqrt(gamma)
 
-    #if Css_identity == True:
-    #    YGY = Y @ diag_g_sqrd @ Y.transpose()
-    #    C = YGY + np.eye(YGY.shape[0]) * g.size / (r_H**2 * 4 * np.pi)
-    #else:
     YGY = Y @ diag_g_sqrd @ Css @ Y.transpose()
-    C = YGY + np.eye(YGY.shape[0]) * np.trace(Css) / (r_H**2 * 4 * np.pi)
-    return C
+    Cxx = YGY + np.eye(YGY.shape[0]) * np.trace(Css) / (r_H**2 * 4 * np.pi)
+    return Cxx
 
 
 def computeAndSaveCues(ls_xyz,
@@ -74,14 +70,12 @@ def computeAndSaveCues(ls_xyz,
     utility_path = pjoin(root_dir, 'Utility')
 
     # Define meshgrid simulation area
-    # array_radius = 5
     orig_area_len = area_len
     area_len = area_len + 0.1 * area_len  # array_radius + 0.1 * array_radius
     x_ls, y_ls, z_ls = ls_xyz[:, 0], ls_xyz[:, 1], ls_xyz[:, 2]
 
     # Define source signal covariance matrix, default is unit matrix
     Css = np.eye(x_ls.size)
-    # Cov = np.ones((phi_ls.size,phi_ls.size))
 
     # Stack source coordinates
     ls = np.array([x_ls, y_ls, z_ls]).transpose()
@@ -144,10 +138,8 @@ def computeAndSaveCues(ls_xyz,
 
     r = np.linalg.norm(theta, axis=1)
     r = np.tile(r[:, np.newaxis, :], (1, 3, 1))
-
     theta_norm = theta / r
-    r_norm = r
-    r_norm = r_norm[:, 0, :]
+    r = r[:, 0, :]
 
     source_phi = np.arctan2(theta_norm[:, 1, :],
                             theta_norm[:, 0, :]) / np.pi * 180.0  # + 90.0
@@ -178,7 +170,7 @@ def computeAndSaveCues(ls_xyz,
         room_T60 = room_T60_list[s]
 
         for i in range(x_ls.size):
-            w_r[i, :] = r_norm[i, :]**exponents[i]
+            w_r[i, :] = r[i, :]**exponents[i]
 
         for rot in range(num_rotations):
             for p in range(num_listener_pos):
