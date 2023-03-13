@@ -3,6 +3,7 @@ This repository hosts python code for the DAGA2023 paper 'Modeling the Listening
 
 Dependencies:
 * numpy
+* scipy
 * matplotlib
 * soundfile
 * joblib

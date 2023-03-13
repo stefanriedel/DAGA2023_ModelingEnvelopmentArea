@@ -1,6 +1,6 @@
 import soundfile
 import numpy as np
-import signal
+import scipy.signal as signal
 
 
 def binaural_decode(x, fs, hrir_path):
