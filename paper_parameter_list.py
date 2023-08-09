@@ -68,7 +68,7 @@ def generateParameterList():
 
     num_src = 12
     b1 = np.array([
-        np.ones(num_src) * computeExponent(-1.5),
+        np.ones(num_src) * computeExponent(0),
         np.ones(num_src) * computeExponent(-3),
         np.ones(num_src) * computeExponent(-6)
     ])
@@ -90,7 +90,7 @@ def generateParameterList():
 
     max_cue = [False] * num_plots
 
-    config_name_lay = [r'$\beta = 1/4$', r'$\beta = 1/2$', r'$\beta = 1$']
+    config_name_lay = [r'$\beta = 0$', r'$\beta = 1/2$', r'$\beta = 1$']
     config_name_3D = [
         r'$\beta = 1/2$', r'$\beta = 1/2$' + ' and ' + r'$\beta = 1$',
         r'$\beta = 1$'
